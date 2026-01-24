@@ -1,0 +1,17 @@
+{
+  "cxxNamespace": ["nitroadvertisingid"],
+  "ios": {
+    "iosModuleName": "NitroAdvertisingId"
+  },
+  "android": {
+    "androidNamespace": ["nitroadvertisingid"],
+    "androidCxxLibName": "nitroadvertisingid"
+  },
+  "autolinking": {
+    "NitroAdvertisingId": {
+      "swift": "NitroAdvertisingId",
+      "kotlin": "NitroAdvertisingId"
+    }
+  },
+  "ignorePaths": ["node_modules"]
+}
