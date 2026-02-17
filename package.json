@@ -1,7 +1,7 @@
 {
   "name": "react-native-nitro-advertising-id",
   "version": "0.1.0",
-  "description": "React Native nitro module for getting advertising IDidadvertising-id",
+  "description": "React Native nitro module for getting advertising ID",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
   "exports": {
@@ -34,6 +34,8 @@
     "!**/.*"
   ],
   "scripts": {
+    "codegen": "rm -rf node_modules nitrogen lib && yarn install && yarn build && npx nitro-codegen && cd example && rm -rf node_modules && yarn install && npx pod-install",
+    "build": "bob build",
     "example": "yarn workspace react-native-nitro-advertising-id-example",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",

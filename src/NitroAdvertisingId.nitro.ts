@@ -1,6 +1,9 @@
 import type { HybridObject } from 'react-native-nitro-modules';
 
+type NitroAdvertisingIdResult = string;
+
 export interface NitroAdvertisingId
   extends HybridObject<{ ios: 'swift'; android: 'kotlin' }> {
-  multiply(a: number, b: number): number;
+  requestPermission(): Promise<NitroAdvertisingIdResult>;
+  getAdvertisingId(): string;
 }

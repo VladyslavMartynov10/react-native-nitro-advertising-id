@@ -115,4 +115,7 @@ android {
 dependencies {
   implementation "com.facebook.react:react-android"
   implementation project(":react-native-nitro-modules")
+
+  // Google Play Services for Advertising ID
+  implementation "com.google.android.gms:play-services-ads-identifier:18.1.0"
 }
