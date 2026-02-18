@@ -1,15 +1,16 @@
-import NitroModules
-import AppTrackingTransparency
 import AdSupport
+import AppTrackingTransparency
+import NitroModules
 import UIKit
 
 class NitroAdvertisingId: HybridNitroAdvertisingIdSpec {
   @MainActor
-  private var pendingContinuation: CheckedContinuation<ATTrackingManager.AuthorizationStatus, Error>?
-  
+  private var pendingContinuation:
+    CheckedContinuation<ATTrackingManager.AuthorizationStatus, Error>?
+
   override init() {
     super.init()
-    
+
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(onApplicationDidBecomeActive),
@@ -17,7 +18,7 @@ class NitroAdvertisingId: HybridNitroAdvertisingIdSpec {
       object: nil
     )
   }
-  
+
   deinit {
     NotificationCenter.default.removeObserver(
       self,
@@ -25,42 +26,42 @@ class NitroAdvertisingId: HybridNitroAdvertisingIdSpec {
       object: nil
     )
   }
-  
-  func requestPermission() throws -> NitroModules.Promise<String> {
-    let promise = Promise<String>()
-    
+
+  func requestPermission() throws -> NitroModules.Promise<NitroAdvertisingIdResult> {
+    let promise = Promise<NitroAdvertisingIdResult>()
+
     Task {
       do {
         if #available(iOS 14, *) {
           let currentStatus = ATTrackingManager.trackingAuthorizationStatus
-          
+
           if currentStatus != .notDetermined {
-            promise.resolve(withResult: self.convertStatusToString(currentStatus))
+            promise.resolve(withResult: self.convertStatus(currentStatus))
             return
           }
-          
+
           let status = try await self.requestTrackingAuthorization()
-          promise.resolve(withResult: self.convertStatusToString(status))
+          promise.resolve(withResult: self.convertStatus(status))
         } else {
           if ASIdentifierManager.shared().isAdvertisingTrackingEnabled {
-            promise.resolve(withResult: "authorized")
+            promise.resolve(withResult: .authorized)
           } else {
-            promise.resolve(withResult: "denied")
+            promise.resolve(withResult: .denied)
           }
         }
       } catch {
         promise.reject(withError: error)
       }
     }
-    
+
     return promise
   }
-  
+
   func getAdvertisingId() -> String {
     let idfa = ASIdentifierManager.shared().advertisingIdentifier
     return idfa.uuidString
   }
-  
+
   func isAdvertisingTrackingEnabled() -> Bool {
     if #available(iOS 14, *) {
       return ATTrackingManager.trackingAuthorizationStatus == .authorized
@@ -68,23 +69,25 @@ class NitroAdvertisingId: HybridNitroAdvertisingIdSpec {
       return ASIdentifierManager.shared().isAdvertisingTrackingEnabled
     }
   }
-  
-  func getPermissionStatus() -> String {
+
+  func getPermissionStatus() -> NitroAdvertisingIdResult {
     if #available(iOS 14, *) {
-      return convertStatusToString(ATTrackingManager.trackingAuthorizationStatus)
+      return convertStatus(ATTrackingManager.trackingAuthorizationStatus)
     } else {
       if ASIdentifierManager.shared().isAdvertisingTrackingEnabled {
-        return "authorized"
+        return .authorized
       } else {
-        return "denied"
+        return .denied
       }
     }
   }
-  
+
   @available(iOS 14, *)
-  private func requestTrackingAuthorization() async throws -> ATTrackingManager.AuthorizationStatus {
-    return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<ATTrackingManager.AuthorizationStatus, Error>) in
-      
+  private func requestTrackingAuthorization() async throws -> ATTrackingManager.AuthorizationStatus
+  {
+    return try await withCheckedThrowingContinuation {
+      (continuation: CheckedContinuation<ATTrackingManager.AuthorizationStatus, Error>) in
+
       Task { @MainActor in
         if UIApplication.shared.applicationState == .active {
           let status = await ATTrackingManager.requestTrackingAuthorization()
@@ -95,13 +98,13 @@ class NitroAdvertisingId: HybridNitroAdvertisingIdSpec {
       }
     }
   }
-  
+
   @MainActor
   @objc private func onApplicationDidBecomeActive() {
     guard let continuation = pendingContinuation else { return }
-    
+
     pendingContinuation = nil
-    
+
     if #available(iOS 14, *) {
       Task {
         let authStatus = await ATTrackingManager.requestTrackingAuthorization()
@@ -109,20 +112,21 @@ class NitroAdvertisingId: HybridNitroAdvertisingIdSpec {
       }
     }
   }
-  
-  private func convertStatusToString(_ status: ATTrackingManager.AuthorizationStatus) -> String {
+
+  private func convertStatus(_ status: ATTrackingManager.AuthorizationStatus)
+    -> NitroAdvertisingIdResult
+  {
     switch status {
     case .authorized:
-      return "authorized"
+      return .authorized
     case .denied:
-      return "denied"
+      return .denied
     case .restricted:
-      return "restricted"
+      return .restricted
     case .notDetermined:
-      return "notDetermined"
+      return .notdetermined
     @unknown default:
-      return "unknown"
+      return .unknown
     }
   }
 }
-
