@@ -14,9 +14,9 @@ import kotlin.coroutines.resume
 
 @DoNotStrip
 class NitroAdvertisingId : HybridNitroAdvertisingIdSpec() {
-
   companion object {
     private const val AD_ID_PERMISSION = "com.google.android.gms.permission.AD_ID"
+    private const val DEFAULT_ADVERTISING_ID = "00000000-0000-0000-0000-000000000000"
     private var requestCode = 100
   }
 
@@ -25,40 +25,40 @@ class NitroAdvertisingId : HybridNitroAdvertisingIdSpec() {
   }
 
   private fun canRequestPermission(permission: String): Boolean {
-    val ctx = NitroModules.applicationContext ?: return false
-    val activity = ctx.currentActivity ?: return false
+    val context = NitroModules.applicationContext ?: return false
+    val activity = context.currentActivity ?: return false
     return !activity.shouldShowRequestPermissionRationale(permission) ||
             activity.shouldShowRequestPermissionRationale(permission)
   }
 
-  private fun getPermissionStatus(permission: String): String {
-    val ctx = NitroModules.applicationContext ?: return "undetermined"
-    val status = ContextCompat.checkSelfPermission(ctx, permission)
+  private fun getPermissionStatus(permission: String): NitroAdvertisingIdResult {
+    val context = NitroModules.applicationContext ?: return NitroAdvertisingIdResult.UNDETERMINED
+    val status = ContextCompat.checkSelfPermission(context, permission)
     return when (status) {
-      PackageManager.PERMISSION_GRANTED -> "granted"
+      PackageManager.PERMISSION_GRANTED -> NitroAdvertisingIdResult.GRANTED
       PackageManager.PERMISSION_DENIED -> {
-        if (canRequestPermission(permission)) "undetermined" else "denied"
+        if (canRequestPermission(permission)) NitroAdvertisingIdResult.UNDETERMINED else NitroAdvertisingIdResult.DENIED
       }
 
-      else -> "undetermined"
+      else -> NitroAdvertisingIdResult.UNDETERMINED
     }
   }
 
-  override fun requestPermission(): Promise<String> = Promise.async {
+  override fun requestPermission(): Promise<NitroAdvertisingIdResult> = Promise.async {
     if (!isAndroid13OrHigher()) {
-      return@async "granted"
+      return@async NitroAdvertisingIdResult.GRANTED
     }
 
     val currentStatus = getPermissionStatus(AD_ID_PERMISSION)
 
-    if (currentStatus == "granted") {
-      return@async "granted"
+    if (currentStatus == NitroAdvertisingIdResult.GRANTED) {
+      return@async NitroAdvertisingIdResult.GRANTED
     }
 
-    val ctx = NitroModules.applicationContext
+    val context = NitroModules.applicationContext
       ?: throw Error("Application context is not available")
 
-    val activity = ctx.currentActivity
+    val activity = context.currentActivity
       ?: throw Error("Current activity is not available")
 
     check(activity is PermissionAwareActivity) {
@@ -71,8 +71,8 @@ class NitroAdvertisingId : HybridNitroAdvertisingIdSpec() {
         if (code != reqCode) return@PermissionListener false
         val result = results.firstOrNull() ?: PackageManager.PERMISSION_DENIED
         val status = when (result) {
-          PackageManager.PERMISSION_GRANTED -> "granted"
-          else -> if (canRequestPermission(AD_ID_PERMISSION)) "undetermined" else "denied"
+          PackageManager.PERMISSION_GRANTED -> NitroAdvertisingIdResult.GRANTED
+          else -> if (canRequestPermission(AD_ID_PERMISSION)) NitroAdvertisingIdResult.UNDETERMINED else NitroAdvertisingIdResult.DENIED
         }
         cont.resume(status)
         true
@@ -82,16 +82,16 @@ class NitroAdvertisingId : HybridNitroAdvertisingIdSpec() {
   }
 
   override fun getAdvertisingId(): String {
-    val ctx = NitroModules.applicationContext
+    val context = NitroModules.applicationContext
       ?: throw Error("Application context is not available")
 
     return try {
-      val adInfo = AdvertisingIdClient.getAdvertisingIdInfo(ctx)
+      val adInfo = AdvertisingIdClient.getAdvertisingIdInfo(context)
 
       if (adInfo.isLimitAdTrackingEnabled) {
-        "00000000-0000-0000-0000-000000000000"
+        DEFAULT_ADVERTISING_ID
       } else {
-        adInfo.id ?: "00000000-0000-0000-0000-000000000000"
+        adInfo.id ?: DEFAULT_ADVERTISING_ID
       }
     } catch (e: Exception) {
       throw Error("Failed to get advertising ID: ${e.message}")
