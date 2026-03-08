@@ -52,6 +52,38 @@ Edit **`Info.plist`**. Add the following item (Set **Value** as desired):
 
 No additional setup required. The library uses Google Play Services Ads Identifier which is automatically linked.
 
+### Expo Setup
+
+Install the required packages:
+
+```bash
+npx expo install react-native-nitro-advertising-id react-native-nitro-modules expo-build-properties
+```
+
+Add the following to your `app.json` (or `app.config.js`):
+
+```json
+{
+  "expo": {
+    "newArchEnabled": true,
+    "ios": {
+      "infoPlist": {
+        "NSUserTrackingUsageDescription": "CHANGEME: This app needs access to your advertising identifier to provide personalized ads."
+      }
+    },
+  }
+}
+```
+
+Then create a development build:
+
+```bash
+npx expo prebuild
+npx expo run:ios
+# or
+npx expo run:android
+```
+
 ---
 
 ## 🎯 API Reference
