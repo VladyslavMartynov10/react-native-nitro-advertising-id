@@ -1,6 +1,6 @@
 {
   "name": "react-native-nitro-advertising-id",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React Native nitro module for getting advertising ID",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
