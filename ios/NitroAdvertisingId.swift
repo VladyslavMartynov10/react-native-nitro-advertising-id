@@ -40,10 +40,23 @@ class NitroAdvertisingId: HybridNitroAdvertisingIdSpec {
       ATTrackingManager.trackingAuthorizationStatus == .notDetermined
     {
       await self.waitUntilAppBecomesActive()
-      status = ATTrackingManager.trackingAuthorizationStatus
+      status = await self.waitForStatusResolution()
     }
 
     return status
+  }
+
+  @available(iOS 14, *)
+  private func waitForStatusResolution() async -> ATTrackingManager.AuthorizationStatus {
+    let maxAttempts = 60
+    for attempt in 1...maxAttempts {
+      let current = ATTrackingManager.trackingAuthorizationStatus
+      if current != .notDetermined {
+        return current
+      }
+      try? await Task.sleep(nanoseconds: 500_000_000)
+    }
+    return ATTrackingManager.trackingAuthorizationStatus
   }
 
   @MainActor
